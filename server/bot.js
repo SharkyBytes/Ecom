@@ -170,3 +170,4 @@ bot.on('message', async (msg) => {
     bot.sendMessage(chatId, "Sorry, I'm having trouble thinking right now. Please try again later.");
   }
 });
+
