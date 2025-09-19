@@ -15,8 +15,8 @@ if (!TELEGRAM_BOT_TOKEN || !GEMINI_API_KEY) {
 
 // --- Your Custom Tools / Functions ---
 // This is where you define the functions Gemini can call.
-// This is a FAKE database for demonstration. Replace this with your actual database calls.
 
+// Original function for account details
 const getAccountDetails = (args) => {
   const { userId } = args;
   console.log(`Fetching account details for user_id: ${userId}`);
@@ -41,128 +41,148 @@ const getAccountDetails = (args) => {
   };
 
   const userData = fakeDatabase[userId];
-
-  if (userData) {
-    // Gemini needs the function output to be a JSON string or object
-    return userData;
-  } else {
-    return { error: "User not found. Please provide a valid user ID like 'user123' or 'testuser'." };
-  }
+  return userData || { error: "User not found. Please provide a valid user ID like 'user123' or 'testuser'." };
 };
+
+// NEW: Function for the /info endpoint
+const getInfo = () => {
+  console.log("Function called: getInfo");
+  return { status: "success", message: "hey /info is calling" };
+};
+
+// NEW: Function for the /products endpoint
+const getProducts = () => {
+  console.log("Function called: getProducts");
+  return { 
+    products: [
+      { id: 'prod_01', name: 'Wireless Keyboard', price: 79.99 },
+      { id: 'prod_02', name: '4K Monitor', price: 399.99 },
+    ],
+    message: "hey /products is calling"
+  };
+};
+
+// NEW: Function for the /accounts endpoint
+const getAccounts = () => {
+  console.log("Function called: getAccounts");
+  return { 
+    total_sales: 1573.45,
+    period: "Q3 2025",
+    message: "hey /accounts is calling"
+  };
+};
+
+// A "toolbelt" object that maps function names to the actual functions
+const availableTools = {
+  get_account_details: getAccountDetails,
+  get_info: getInfo,
+  get_products: getProducts,
+  get_accounts: getAccounts,
+};
+
 
 // --- Gemini Model and Chat Handling ---
 
-// Initialize the Gemini AI client
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
   model: 'gemini-1.5-flash',
-  // Define your tools for the model to use
+  // Define all your tools for the model to use
   tools: {
     functionDeclarations: [
       {
         name: "get_account_details",
-        description: "Gets the account details for a given user ID from the database.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            userId: {
-              type: "STRING",
-              description: "The unique identifier for the user (e.g., their Telegram username)."
-            }
-          },
-          required: ["userId"]
-        }
+        description: "Gets the e-commerce account details for a given user ID.",
+        parameters: { type: "OBJECT", properties: { userId: { type: "STRING", description: "The unique identifier for the user." }}, required: ["userId"] }
+      },
+      {
+        name: "get_info",
+        description: "Gets general information or status. Triggered by requests for 'info' or '/info'.",
+        parameters: { type: "OBJECT", properties: {} } // No parameters needed
+      },
+      {
+        name: "get_products",
+        description: "Gets a list of available products. Triggered by requests for 'products', 'show me products', or '/products'.",
+        parameters: { type: "OBJECT", properties: {} }
+      },
+      {
+        name: "get_accounts",
+        description: "Gets the total sales figures or account information. Triggered by requests for 'sales', 'accounts', or '/accounts'.",
+        parameters: { type: "OBJECT", properties: {} }
       }
     ]
   }
 });
 
-// An object to hold chat sessions for different users
 const userChats = {};
 
 // --- Telegram Bot Setup ---
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
-
 console.log('Telegram bot is running...');
 
-// Listener for the /start command
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const userName = msg.from.first_name;
   const welcomeText = `Hi ${userName}! I'm your E-commerce Bot, powered by Gemini 🤖\n\n` +
-    "You can ask me questions about your account. For example:\n" +
+    "You can ask me things like:\n" +
     "- 'What are the open orders for user123?'\n" +
-    "- 'Tell me about the account for testuser.'\n\n" +
-    "Just type your question!";
+    "- '/info'\n" +
+    "- 'Show me the products'\n" +
+    "- '/accounts'";
   bot.sendMessage(chatId, welcomeText);
 });
 
-// Listener for any text message
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const userMessage = msg.text;
 
-  // Ignore commands
-  if (userMessage.startsWith('/')) {
+  // Ignore the /start command since it has its own handler
+  if (userMessage.startsWith('/start')) {
     return;
   }
   
-  // Show a "typing..." indicator in the chat
   bot.sendChatAction(chatId, 'typing');
 
   try {
-    // Get or create a chat session for the user
     if (!userChats[chatId]) {
-      const systemInstruction = "You are a helpful e-commerce assistant. " +
-        "Your goal is to help users by answering their questions about their accounts. " +
-        "Use the provided tools to fetch user data. " +
-        "When asked about an account, assume the user_id is their Telegram username unless they specify another one. " +
-        "For this demo, tell users they can ask about 'user123' or 'testuser'.";
+      const systemInstructionText = "You are a helpful e-commerce assistant. Your goal is to help users by answering their questions about their accounts, products, and sales. Use the provided tools to fetch data. Be concise and helpful.";
         
-      // Start a new chat with automatic function calling enabled
       userChats[chatId] = model.startChat({
         tools: { functionDeclarations: model.tools.functionDeclarations },
-        toolConfig: {
-            functionCallingConfig: {
-                mode: 'AUTO'
-            }
+        toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
+        // FIX: systemInstruction must be an object, not a string
+        systemInstruction: {
+          parts: [{ text: systemInstructionText }]
         },
-        systemInstruction: systemInstruction,
       });
     }
 
-    // Send the message to Gemini
     const result = await userChats[chatId].sendMessage(userMessage);
-    
-    // The Gemini Node.js SDK currently requires manual handling of function calls
     const call = result.response.functionCalls()?.[0];
 
     if (call) {
-        // If Gemini wants to call a function...
-        const { name, args } = call;
-        if (name === 'get_account_details') {
-            const apiResponse = getAccountDetails(args);
-            
-            // Send the function's response back to the model
-            const result2 = await userChats[chatId].sendMessage([
-                {
-                    functionResponse: {
-                        name: 'get_account_details',
-                        response: apiResponse,
-                    },
-                },
-            ]);
-            
-            // The final response from the model after getting the function data
-            const finalResponse = result2.response.text();
-            bot.sendMessage(chatId, finalResponse);
-        }
-    } else {
-        // If it's a direct text response...
-        const finalResponse = result.response.text();
+      const { name, args } = call;
+      console.log(`Gemini wants to call function: ${name} with args:`, args);
+
+      // Check if the requested function exists in our toolbelt
+      if (availableTools[name]) {
+        const apiResponse = availableTools[name](args);
+        
+        // Send the function's response back to the model
+        const result2 = await userChats[chatId].sendMessage([
+          { functionResponse: { name: name, response: apiResponse } },
+        ]);
+        
+        const finalResponse = result2.response.text();
         bot.sendMessage(chatId, finalResponse);
+      } else {
+        console.error(`Unknown function call: ${name}`);
+        bot.sendMessage(chatId, `Sorry, I don't know how to do that.`);
+      }
+    } else {
+      const finalResponse = result.response.text();
+      bot.sendMessage(chatId, finalResponse);
     }
 
   } catch (error) {
