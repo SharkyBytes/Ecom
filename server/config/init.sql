@@ -1,15 +1,15 @@
 -- ======================================
---  Seller-Centric E-Commerce DB Init
+-- SCHEMA + SAMPLE DATA
 -- ======================================
 
--- Drop & recreate database (optional, only in dev)
--- DROP DATABASE IF EXISTS ecommerce_seller;
--- CREATE DATABASE ecommerce_seller;
--- \c ecommerce_seller;  -- Connect to the database
+-- Drop schema if needed (DEV only)
+-- DROP SCHEMA public CASCADE;
+-- CREATE SCHEMA public;
 
--- ======================================
---  TABLE: addresses
--- ======================================
+-- ========================
+--  TABLE DEFINITIONS
+-- ========================
+
 CREATE TABLE IF NOT EXISTS addresses (
     address_id BIGSERIAL PRIMARY KEY,
     line1 VARCHAR(255) NOT NULL,
@@ -20,9 +20,6 @@ CREATE TABLE IF NOT EXISTS addresses (
     country VARCHAR(50) NOT NULL
 );
 
--- ======================================
---  TABLE: sellers
--- ======================================
 CREATE TABLE IF NOT EXISTS sellers (
     seller_id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -37,18 +34,12 @@ CREATE TABLE IF NOT EXISTS sellers (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- ======================================
---  TABLE: categories
--- ======================================
 CREATE TABLE IF NOT EXISTS categories (
     category_id BIGSERIAL PRIMARY KEY,
     parent_id BIGINT REFERENCES categories(category_id) ON DELETE SET NULL,
     name VARCHAR(100) NOT NULL
 );
 
--- ======================================
---  TABLE: products
--- ======================================
 CREATE TABLE IF NOT EXISTS products (
     product_id BIGSERIAL PRIMARY KEY,
     seller_id BIGINT REFERENCES sellers(seller_id) ON DELETE CASCADE,
@@ -61,9 +52,6 @@ CREATE TABLE IF NOT EXISTS products (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- ======================================
---  TABLE: product_variants
--- ======================================
 CREATE TABLE IF NOT EXISTS product_variants (
     variant_id BIGSERIAL PRIMARY KEY,
     product_id BIGINT REFERENCES products(product_id) ON DELETE CASCADE,
@@ -74,23 +62,9 @@ CREATE TABLE IF NOT EXISTS product_variants (
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active','inactive'))
 );
 
--- ======================================
---  TABLE: inventory (optional)
--- ======================================
-CREATE TABLE IF NOT EXISTS inventory (
-    inventory_id BIGSERIAL PRIMARY KEY,
-    product_id BIGINT REFERENCES products(product_id) ON DELETE CASCADE,
-    current_stock INT DEFAULT 0,
-    reserved_stock INT DEFAULT 0,
-    threshold_stock INT DEFAULT 0
-);
-
--- ======================================
---  TABLE: orders
--- ======================================
 CREATE TABLE IF NOT EXISTS orders (
     order_id BIGSERIAL PRIMARY KEY,
-    buyer_id BIGINT, -- If multi-vendor marketplace, else NULL
+    buyer_id BIGINT,
     seller_id BIGINT REFERENCES sellers(seller_id) ON DELETE CASCADE,
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending','confirmed','shipped','delivered','cancelled','returned')),
     total_amount DECIMAL(10,2) NOT NULL CHECK (total_amount >= 0),
@@ -98,9 +72,6 @@ CREATE TABLE IF NOT EXISTS orders (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- ======================================
---  TABLE: order_items
--- ======================================
 CREATE TABLE IF NOT EXISTS order_items (
     order_item_id BIGSERIAL PRIMARY KEY,
     order_id BIGINT REFERENCES orders(order_id) ON DELETE CASCADE,
@@ -110,22 +81,6 @@ CREATE TABLE IF NOT EXISTS order_items (
     price DECIMAL(10,2) NOT NULL CHECK (price >= 0)
 );
 
--- ======================================
---  TABLE: shipments
--- ======================================
-CREATE TABLE IF NOT EXISTS shipments (
-    shipment_id BIGSERIAL PRIMARY KEY,
-    order_id BIGINT REFERENCES orders(order_id) ON DELETE CASCADE,
-    tracking_number VARCHAR(255),
-    carrier VARCHAR(100),
-    status VARCHAR(20) DEFAULT 'ready_to_ship' CHECK (status IN ('ready_to_ship','shipped','in_transit','delivered','returned')),
-    shipped_at TIMESTAMP,
-    delivered_at TIMESTAMP
-);
-
--- ======================================
---  TABLE: payouts
--- ======================================
 CREATE TABLE IF NOT EXISTS payouts (
     payout_id BIGSERIAL PRIMARY KEY,
     seller_id BIGINT REFERENCES sellers(seller_id) ON DELETE CASCADE,
@@ -135,21 +90,53 @@ CREATE TABLE IF NOT EXISTS payouts (
     reference_id VARCHAR(255)
 );
 
--- ======================================
---  TABLE: seller_analytics (optional)
--- ======================================
-CREATE TABLE IF NOT EXISTS seller_analytics (
-    analytics_id BIGSERIAL PRIMARY KEY,
-    seller_id BIGINT REFERENCES sellers(seller_id) ON DELETE CASCADE,
-    date DATE NOT NULL,
-    total_orders INT DEFAULT 0,
-    total_sales DECIMAL(10,2) DEFAULT 0,
-    refunds INT DEFAULT 0,
-    net_earnings DECIMAL(10,2) DEFAULT 0
-);
+-- ========================
+--  FAKE DATA INSERTS
+-- ========================
 
--- Indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_products_seller_id ON products(seller_id);
-CREATE INDEX IF NOT EXISTS idx_orders_seller_id ON orders(seller_id);
-CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
-CREATE INDEX IF NOT EXISTS idx_shipments_order_id ON shipments(order_id);
+-- Addresses
+INSERT INTO addresses (line1, city, state, pincode, country)
+VALUES 
+('123 Market Street','Mumbai','Maharashtra','400001','India'),
+('221B Baker Street','Delhi','Delhi','110001','India');
+
+-- Sellers
+INSERT INTO sellers (name, owner_name, email, phone, address_id, business_type, gst_number, kyc_status)
+VALUES
+('TechBazaar','Ramesh Sharma','techbazaar@example.com','9876543210',1,'company','27AABCT1234A1Z5','verified'),
+('HomeKart','Priya Singh','homekart@example.com','9988776655',2,'individual',NULL,'verified');
+
+-- Categories
+INSERT INTO categories (name) VALUES ('Electronics'),('Home Appliances');
+
+-- Products
+INSERT INTO products (seller_id, name, description, category_id, price, status)
+VALUES
+(1,'Wireless Mouse','Ergonomic wireless mouse',1,799.00,'active'),
+(1,'Mechanical Keyboard','RGB backlit keyboard',1,2499.00,'active'),
+(2,'Mixer Grinder','500W Kitchen Mixer Grinder',2,3299.00,'active');
+
+-- Product Variants
+INSERT INTO product_variants (product_id, sku, attributes, price, stock_quantity)
+VALUES
+(1,'MOUSE-001','{"color":"black"}',799.00,50),
+(2,'KEYBOARD-001','{"color":"white"}',2499.00,30),
+(3,'MIXER-001','{"color":"red"}',3299.00,20);
+
+-- Orders
+INSERT INTO orders (buyer_id, seller_id, status, total_amount, payment_status)
+VALUES
+(101,1,'confirmed',3299.00,'paid'),
+(102,2,'shipped',2499.00,'paid');
+
+-- Order Items
+INSERT INTO order_items (order_id, product_id, variant_id, quantity, price)
+VALUES
+(1,3,3,1,3299.00),
+(2,2,2,1,2499.00);
+
+-- Payouts
+INSERT INTO payouts (seller_id, amount, status, reference_id)
+VALUES
+(1,3299.00,'processed','TXN123456'),
+(2,2499.00,'pending','TXN987654');
