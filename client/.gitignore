@@ -1,42 +1,38 @@
-# Node.js dependencies
-node_modules/
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 
-# Environment variables
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# production
+.next
+.swc
+_static
+out
+dist
+build
+
+# environment variables
 .env
 .env.local
-.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Build output
-dist/
-build/
-out/
-.next/
-.nuxt/
-.cache/
-.tmp/
-coverage/
-
-# Logs
-logs/
-*.log
-*.log.*
-
-# OS files
+# misc
 .DS_Store
-Thumbs.db
-
-# IDE/editor
-.vscode/
-.idea/
-*.swp
-
-# Optional caches
-.npm/
-.yarn/
-.pnp.*
-.eslintcache
-.stylelintcache
+.vercel
+.netlify
+.vscode
+tsconfig.tsbuildinfo
+.ncurc.js
+knip.jsonc
