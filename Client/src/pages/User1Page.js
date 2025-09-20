@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import UserProfile from '../components/UserProfile';
 import OrderDetails from '../components/OrderDetails';
 import { useFlashSale } from '../hooks/useFlashSale';
 import { MOCK_USERS, getOrdersByUserId } from '../services/mockData';
-import { ORDER_STATUS } from '../utils/constants';
+import { ORDER_STATUS, APP_CONFIG } from '../utils/constants';
 
 const User1Page = () => {
   const [user] = useState(MOCK_USERS.user1);
@@ -21,8 +22,8 @@ const User1Page = () => {
   const handleOrderCancel = async (order) => {
     try {
       // Update order status to cancelled
-      const updatedOrders = orders.map(o => 
-        o.id === order.id 
+      const updatedOrders = orders.map(o =>
+        o.id === order.id
           ? { ...o, status: ORDER_STATUS.CANCELLED, cancelledAt: new Date() }
           : o
       );
@@ -32,7 +33,7 @@ const User1Page = () => {
       // Create flash sale for users 2 and 3
       const availableForUsers = ['user2', 'user3'];
       const result = await createFlashSale(order, availableForUsers);
-      
+
       if (!result.success) {
         console.error('Failed to create flash sale:', result.error);
         // Optionally revert the order status if flash sale creation fails
@@ -54,6 +55,21 @@ const User1Page = () => {
   return (
     <div className="min-h-screen-safe bg-gray-50 py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
+        {/* Navigation Links */}
+        <div className="text-center mb-4">
+          <div className="inline-flex gap-4 text-sm">
+            <Link to={APP_CONFIG.ROUTES.CANCEL_ORDER} className="text-blue-600 hover:text-blue-800 underline">
+              Cancel Order
+            </Link>
+            <Link to={APP_CONFIG.ROUTES.USER2} className="text-blue-600 hover:text-blue-800 underline">
+              User 2
+            </Link>
+            <Link to={APP_CONFIG.ROUTES.USER3} className="text-blue-600 hover:text-blue-800 underline">
+              User 3
+            </Link>
+          </div>
+        </div>
+
         {/* Page Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-2">
@@ -105,7 +121,7 @@ const User1Page = () => {
             <h2 className="text-lg sm:text-xl font-semibold text-primary mb-4">
               Current Order
             </h2>
-            
+
             {activeOrder ? (
               <OrderDetails
                 order={activeOrder}
@@ -147,7 +163,7 @@ const User1Page = () => {
             About Flash Sales
           </h3>
           <p className="text-blue-700 text-sm sm:text-base leading-relaxed">
-            When you cancel an order, it becomes available as a flash sale to nearby customers who are interested in similar products. 
+            When you cancel an order, it becomes available as a flash sale to nearby customers who are interested in similar products.
             This helps reduce waste and gives other customers a chance to get great deals on items you no longer need.
           </p>
         </div>

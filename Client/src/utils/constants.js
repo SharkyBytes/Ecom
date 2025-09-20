@@ -7,9 +7,9 @@ export const APP_CONFIG = {
     USERS: 'users_data'
   },
   ROUTES: {
-    USER1: '/',
+    CANCEL_ORDER: '/',
     USER2: '/user2',
-    USER3: '/user3'
+    FLASH_SALE: '/flash-sale'
   }
 };
 
