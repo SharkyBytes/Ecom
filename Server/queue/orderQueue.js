@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { query } from '../db/db.js';
 import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
+import { emitNotification } from '../socket.js';
 
 dotenv.config();
 
@@ -51,7 +52,7 @@ orderCancellationQueue.process(async (job) => {
     console.log('Order details:', order);
     
     // Step 2: Find interested users
-    // Query users interested in this product category in the same city or nearby
+    // Query users interested in this product category in the same city as the shipping pincode
     // who have interacted with the category in the last 14 days
     const interestedUsersResult = await query(
       `SELECT DISTINCT u.id, u.name, u.city, u.push_subscription, i.category
@@ -60,20 +61,21 @@ orderCancellationQueue.process(async (job) => {
        WHERE (i.category = $1 OR i.product_id = $2)
        AND (u.city = $3 OR ABS(u.city - $3) < 100000) -- Nearby cities based on PIN code proximity
        AND i.last_seen_at > NOW() - INTERVAL '14 days'`,
-      [order.category, productId, order.user_city]
+      [order.category, productId, order.shipping_pincode] // Use shipping_pincode instead of user_city
     );
     
     console.log(`Found ${interestedUsersResult.rowCount} interested users`);
     
     // Step 3: Calculate pricing and create flash deals
-    // Estimate return cost (in a real system, this would be from a cost model)
-    const returnCost = order.price * 0.15; // Assuming 15% of price as return cost
+    // Use fixed delivery cost of 40 rupees + 15% of price as return cost
+    const deliveryCost = 40; 
+    const returnCost = deliveryCost + (order.price * 0.07);
     const costSaved = returnCost;
     const discountAmount = costSaved * 0.75; // 75% of saved cost as discount
     const discountPercent = (discountAmount / order.price) * 100;
     const discountedPrice = Math.max(order.price - discountAmount, order.price * 0.7); // Ensure not below 70% of original price
     
-    console.log(`Original price: ${order.price}, Return cost: ${returnCost}`);
+    console.log(`Original price: ${order.price}, Delivery cost: ${deliveryCost}, Return cost: ${returnCost}`);
     console.log(`Discount amount: ${discountAmount}, Discounted price: ${discountedPrice}`);
     
     // Step 4: Process each interested user
@@ -104,10 +106,23 @@ orderCancellationQueue.process(async (job) => {
       
       console.log(`Created flash deal ${flashDealId} for user ${user.id}`);
       
-      // Send notification (simulated)
+      // Send notification (will be implemented with PWA)
       console.log(`Sending notification to user ${user.id}:`);
-      console.log(`The ${order.product_name} you were watching is now available at a lower price in your city!`);
-      console.log(`Original price: ${order.price}, Now: ${discountedPrice} (${Math.round(discountPercent)}% off)`);
+      console.log(`Flash Deal! ${order.product_name} is now available at a lower price in your city!`);
+      console.log(`Original price: ₹${order.price}, Now: ₹${discountedPrice.toFixed(2)} (${Math.round(discountPercent)}% off)`);
+      
+      // Prepare notification data for PWA
+      const notificationData = {
+        userId: user.id,
+        title: "Flash Deal Available!",
+        body: `${order.product_name} is now available at ₹${discountedPrice.toFixed(2)} (${Math.round(discountPercent)}% off)`,
+        productId: order.product_id,
+        flashDealId: flashDealId,
+        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
+      };
+      
+      // Send the notification via Socket.IO
+      emitNotification(user.id, notificationData);
       
       // Set rate limiting in Redis (24 hour TTL)
       await redisClient.set(redisKey, '1', 'EX', 24 * 60 * 60);

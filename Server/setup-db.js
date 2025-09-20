@@ -74,69 +74,17 @@ async function setupDatabase() {
     await appPool.query(sql);
     console.log('Database schema initialized successfully!');
     
-    // 6. Seed data
+    // 6. Seed data using the mock data module
     console.log('Seeding database with mock data...');
     
-    // Create two users in different cities
-    const user1Id = '11111111-1111-1111-1111-111111111111';
-    const user2Id = '22222222-2222-2222-2222-222222222222';
+    // Import and run the mock data seeder
+    const { seedMockData } = await import('./db/mock-data.js');
+    const mockData = await seedMockData();
     
-    await appPool.query(
-      `INSERT INTO users (id, name, city, locale) 
-       VALUES ($1, $2, $3, $4), ($5, $6, $7, $8)
-       ON CONFLICT (id) DO NOTHING`,
-      [
-        user1Id, 'John Doe', 400001, 'en-US',  // Mumbai
-        user2Id, 'Jane Smith', 110001, 'en-IN'  // Delhi
-      ]
-    );
-    console.log('Users created');
-    
-    // Create two products in different categories
-    const product1Id = '33333333-3333-3333-3333-333333333333';
-    const product2Id = '44444444-4444-4444-4444-444444444444';
-    
-    await appPool.query(
-      `INSERT INTO products (id, name, category, origin_zone, current_price) 
-       VALUES ($1, $2, $3, $4, $5), ($6, $7, $8, $9, $10)
-       ON CONFLICT (id) DO NOTHING`,
-      [
-        product1Id, 'Smartphone X', 'electronics', 400001, 15999.99,
-        product2Id, 'Designer T-shirt', 'fashion', 110001, 1299.99
-      ]
-    );
-    console.log('Products created');
-    
-    // Create one active order
-    const orderId = '55555555-5555-5555-5555-555555555555';
-    
-    await appPool.query(
-      `INSERT INTO orders (id, user_id, product_id, status, price, shipping_pincode) 
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (id) DO NOTHING`,
-      [
-        orderId, user1Id, product1Id, 'active', 15999.99, 400001
-      ]
-    );
-    console.log('Order created');
-    
-    // Create interests
-    await appPool.query(
-      `INSERT INTO interests (id, user_id, product_id, category, city, last_seen_at) 
-       VALUES ($1, $2, $3, $4, $5, NOW()), ($6, $7, NULL, $8, $9, NOW())
-       ON CONFLICT (id) DO NOTHING`,
-      [
-        '66666666-6666-6666-6666-666666666666', user2Id, product1Id, 'electronics', 110001, 
-        '77777777-7777-7777-7777-777777777777', user1Id, 'fashion', 400001
-      ]
-    );
-    console.log('Interests created');
-    
-    console.log('Mock data seeded successfully!');
     console.log('----------------------------------------');
     console.log('To test the cancellation flow:');
-    console.log(`1. Use this order ID: ${orderId}`);
-    console.log(`2. Call POST /api/cancel/${orderId}`);
+    console.log(`1. Use this order ID: ${mockData.orders.ACTIVE_ORDER}`);
+    console.log(`2. Call POST /api/cancel/${mockData.orders.ACTIVE_ORDER}`);
     console.log('----------------------------------------');
     
     console.log('Database setup completed successfully!');

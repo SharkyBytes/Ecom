@@ -22,6 +22,8 @@ services:
     restart: always
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data   # <-- Redis persistence
     networks:
       - meesho-network
 
@@ -31,3 +33,4 @@ networks:
 
 volumes:
   postgres-data:
+  redis-data:

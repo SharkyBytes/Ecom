@@ -2,13 +2,21 @@ import e from "express";
 import dotenv from "dotenv";
 import { pool } from "./db/db.js";
 import Redis from "ioredis";
+import { createServer } from "http";
+import cors from "cors";
+import { initializeSocket } from "./socket.js";
 
 dotenv.config();
 import cancelRoutes from "./routes/cancel.js";
 
 const app = e();
+const httpServer = createServer(app);
+
+// Initialize Socket.IO
+const io = initializeSocket(httpServer);
 
 // Middleware
+app.use(cors());
 app.use(e.json());
 app.use(e.urlencoded({ extended: true }));
 
@@ -42,8 +50,9 @@ const startServer = async () => {
     await testDatabaseConnection();
     
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server listening on port ${PORT}`);
+      console.log(`Socket.IO server running at http://localhost:${PORT}`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);
