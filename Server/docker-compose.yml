@@ -3,30 +3,30 @@ version: '3.8'
 services:
   postgres:
     image: postgres:14-alpine
-    container_name: e6data-postgres
+    container_name: meesho-postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: e6data
+      POSTGRES_DB: meesho
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
-      - e6data-network
+      - meesho-network
 
   redis:
     image: redis:alpine
-    container_name: e6data-redis
+    container_name: meesho-redis
     restart: always
     ports:
       - "6379:6379"
     networks:
-      - e6data-network
+      - meesho-network
 
 networks:
-  e6data-network:
+  meesho-network:
     driver: bridge
 
 volumes:
