@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Service Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #b282a4;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #9a6b8f;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .flash-sale {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Storage Service Cross-Tab Communication Test</h1>
+    <p>Open this page in multiple tabs to test cross-tab communication.</p>
+    
+    <div class="section">
+        <h3>Flash Sale Actions</h3>
+        <button onclick="createFlashSale()">Create Flash Sale</button>
+        <button onclick="purchaseFlashSale()">Purchase Flash Sale</button>
+        <button onclick="expireFlashSale()">Expire Flash Sale</button>
+        <button onclick="clearData()">Clear All Data</button>
+    </div>
+    
+    <div class="section">
+        <h3>Active Flash Sales</h3>
+        <div id="flashSales"></div>
+    </div>
+    
+    <div class="section">
+        <h3>Event Log</h3>
+        <div id="eventLog" class="log"></div>
+    </div>
+
+    <script type="module">
+        // Simple storage service implementation for testing
+        class TestStorageService {
+            constructor() {
+                this.listeners = new Set();
+                this.eventId = 0;
+                this.initializeStorageListener();
+            }
+
+            initializeStorageListener() {
+                window.addEventListener('storage', (event) => {
+                    if (event.key && event.key.startsWith('flash_sale_event_')) {
+                        try {
+                            const eventData = JSON.parse(event.newValue || '{}');
+                            this.listeners.forEach(callback => callback(eventData));
+                        } catch (error) {
+                            console.error('Error parsing storage event:', error);
+                        }
+                    }
+                });
+            }
+
+            broadcastFlashSale(flashSaleData) {
+                const event = {
+                    type: 'FLASH_SALE_CREATED',
+                    id: this.generateEventId(),
+                    timestamp: Date.now(),
+                    data: { ...flashSaleData, status: 'active', createdAt: new Date().toISOString() }
+                };
+
+                this.storeFlashSale(event.data);
+                this.broadcastEvent(event);
+                return event.id;
+            }
+
+            markFlashSalePurchased(flashSaleId, buyerId) {
+                const event = {
+                    type: 'FLASH_SALE_PURCHASED',
+                    id: this.generateEventId(),
+                    timestamp: Date.now(),
+                    data: { flashSaleId, buyerId, purchasedAt: new Date().toISOString() }
+                };
+
+                this.updateFlashSaleStatus(flashSaleId, 'sold', buyerId);
+                this.broadcastEvent(event);
+                return event.id;
+            }
+
+            markFlashSaleExpired(flashSaleId) {
+                const event = {
+                    type: 'FLASH_SALE_EXPIRED',
+                    id: this.generateEventId(),
+                    timestamp: Date.now(),
+                    data: { flashSaleId, expiredAt: new Date().toISOString() }
+                };
+
+                this.updateFlashSaleStatus(flashSaleId, 'expired');
+                this.broadcastEvent(event);
+                return event.id;
+            }
+
+            broadcastEvent(event) {
+                const eventKey = `flash_sale_event_${event.id}`;
+                localStorage.setItem(eventKey, JSON.stringify(event));
+                setTimeout(() => localStorage.removeItem(eventKey), 1000);
+            }
+
+            storeFlashSale(flashSaleData) {
+                const existingFlashSales = this.getFlashSales();
+                existingFlashSales[flashSaleData.id] = flashSaleData;
+                localStorage.setItem('flash_sales', JSON.stringify(existingFlashSales));
+            }
+
+            updateFlashSaleStatus(flashSaleId, status, buyerId = null) {
+                const flashSales = this.getFlashSales();
+                if (flashSales[flashSaleId]) {
+                    flashSales[flashSaleId].status = status;
+                    if (buyerId) {
+                        flashSales[flashSaleId].buyerId = buyerId;
+                        flashSales[flashSaleId].purchasedAt = new Date().toISOString();
+                    }
+                    if (status === 'expired') {
+                        flashSales[flashSaleId].expiredAt = new Date().toISOString();
+                    }
+                    localStorage.setItem('flash_sales', JSON.stringify(flashSales));
+                }
+            }
+
+            getFlashSales() {
+                try {
+                    const flashSales = localStorage.getItem('flash_sales');
+                    return flashSales ? JSON.parse(flashSales) : {};
+                } catch (error) {
+                    return {};
+                }
+            }
+
+            onStorageChange(callback) {
+                this.listeners.add(callback);
+            }
+
+            clearAllData() {
+                localStorage.removeItem('flash_sales');
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('flash_sale_event_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+
+            generateEventId() {
+                return `${Date.now()}_${++this.eventId}_${Math.random().toString(36).substr(2, 9)}`;
+            }
+        }
+
+        // Initialize the service
+        const storageService = new TestStorageService();
+        let currentFlashSaleId = null;
+
+        // Set up event listener
+        storageService.onStorageChange((event) => {
+            logEvent(`Received: ${event.type}`, event.data);
+            updateFlashSalesDisplay();
+        });
+
+        // Helper functions
+        function logEvent(message, data = null) {
+            const log = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.innerHTML = `<strong>${timestamp}:</strong> ${message}`;
+            if (data) {
+                entry.innerHTML += `<br><small>${JSON.stringify(data, null, 2)}</small>`;
+            }
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function updateFlashSalesDisplay() {
+            const container = document.getElementById('flashSales');
+            const flashSales = storageService.getFlashSales();
+            
+            container.innerHTML = '';
+            Object.values(flashSales).forEach(sale => {
+                const div = document.createElement('div');
+                div.className = 'flash-sale';
+                div.innerHTML = `
+                    <strong>${sale.productName}</strong> - Status: ${sale.status}<br>
+                    Original: $${sale.originalPrice} | Discounted: $${sale.discountedPrice}<br>
+                    <small>ID: ${sale.id}</small>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Global functions for buttons
+        window.createFlashSale = function() {
+            const flashSaleData = {
+                id: `flash_sale_${Date.now()}`,
+                orderId: `order_${Date.now()}`,
+                productName: `Product ${Math.floor(Math.random() * 100)}`,
+                originalPrice: 100,
+                discountedPrice: 80,
+                availableFor: ['user2', 'user3']
+            };
+            
+            currentFlashSaleId = flashSaleData.id;
+            storageService.broadcastFlashSale(flashSaleData);
+            logEvent('Created flash sale', flashSaleData);
+            updateFlashSalesDisplay();
+        };
+
+        window.purchaseFlashSale = function() {
+            if (!currentFlashSaleId) {
+                alert('No active flash sale to purchase');
+                return;
+            }
+            
+            const buyerId = `user_${Math.floor(Math.random() * 3) + 1}`;
+            storageService.markFlashSalePurchased(currentFlashSaleId, buyerId);
+            logEvent(`Flash sale purchased by ${buyerId}`);
+            updateFlashSalesDisplay();
+        };
+
+        window.expireFlashSale = function() {
+            if (!currentFlashSaleId) {
+                alert('No active flash sale to expire');
+                return;
+            }
+            
+            storageService.markFlashSaleExpired(currentFlashSaleId);
+            logEvent('Flash sale expired');
+            updateFlashSalesDisplay();
+        };
+
+        window.clearData = function() {
+            storageService.clearAllData();
+            currentFlashSaleId = null;
+            logEvent('All data cleared');
+            updateFlashSalesDisplay();
+        };
+
+        // Initial display update
+        updateFlashSalesDisplay();
+        logEvent('Storage service initialized');
+    </script>
+</body>
+</html>

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Condition Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .user-section {
+            border: 2px solid #b282a4;
+            margin-bottom: 20px;
+        }
+        .user-section h2 {
+            background: #b282a4;
+            color: white;
+            margin: 0;
+            padding: 10px;
+        }
+        button {
+            background: #b282a4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #9a6b8f;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .flash-sale {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flash Sale Race Condition Test</h1>
+    <p>This page demonstrates race condition handling in flash sales. Open this page in multiple tabs to test simultaneous purchases.</p>
+
+    <div class="container">
+        <h2>Instructions</h2>
+        <ol>
+            <li>Open this page in 3 separate browser tabs</li>
+            <li>In the first tab, click "Create Flash Sale" to simulate a cancelled order</li>
+            <li>In the other tabs, you should see the flash sale appear</li>
+            <li>Click "Purchase" in multiple tabs simultaneously to test race condition handling</li>
+            <li>Only one purchase should succeed, others should show appropriate error messages</li>
+        </ol>
+    </div>
+
+    <div class="container user-section">
+        <h2>User 1 - Order Cancellation</h2>
+        <button onclick="createFlashSale()">Create Flash Sale (Cancel Order)</button>
+        <div id="user1-status"></div>
+    </div>
+
+    <div class="container user-section">
+        <h2>User 2 - Flash Sale Recipient</h2>
+        <div id="user2-flash-sale"></div>
+        <div id="user2-status"></div>
+    </div>
+
+    <div class="container user-section">
+        <h2>User 3 - Flash Sale Recipient</h2>
+        <div id="user3-flash-sale"></div>
+        <div id="user3-status"></div>
+    </div>
+
+    <div class="container">
+        <h2>Event Log</h2>
+        <button onclick="clearLog()">Clear Log</button>
+        <div id="event-log" class="log"></div>
+    </div>
+
+    <script>
+        // Simple storage service for testing
+        class TestStorageService {
+            constructor() {
+                this.eventId = 0;
+                this.setupStorageListener();
+            }
+
+            setupStorageListener() {
+                window.addEventListener('storage', (event) => {
+                    if (event.key && event.key.startsWith('flash_sale_')) {
+                        try {
+                            const eventData = JSON.parse(event.newValue || '{}');
+                            this.handleStorageEvent(eventData);
+                        } catch (error) {
+                            console.error('Error parsing storage event:', error);
+                        }
+                    }
+                });
+            }
+
+            handleStorageEvent(eventData) {
+                this.log(`Received event: ${eventData.type}`, eventData);
+                
+                switch (eventData.type) {
+                    case 'FLASH_SALE_CREATED':
+                        this.showFlashSale(eventData.data);
+                        break;
+                    case 'FLASH_SALE_PURCHASED':
+                        this.hideFlashSale(eventData.data.flashSaleId, eventData.data.buyerId);
+                        break;
+                }
+            }
+
+            createFlashSale(orderData) {
+                const flashSaleData = {
+                    id: `flash_sale_${Date.now()}`,
+                    orderId: orderData.id,
+                    productName: orderData.productName,
+                    originalPrice: orderData.originalPrice,
+                    discountedPrice: orderData.discountedPrice,
+                    availableFor: ['user2', 'user3'],
+                    status: 'active',
+                    createdAt: new Date().toISOString()
+                };
+
+                const event = {
+                    type: 'FLASH_SALE_CREATED',
+                    id: this.generateEventId(),
+                    timestamp: Date.now(),
+                    data: flashSaleData
+                };
+
+                this.broadcastEvent(event);
+                this.log('Flash sale created', flashSaleData);
+                return flashSaleData.id;
+            }
+
+            purchaseFlashSale(flashSaleId, buyerId) {
+                const purchaseTimestamp = Date.now();
+                
+                // Check if already purchased
+                const existingPurchases = this.getExistingPurchases();
+                if (existingPurchases[flashSaleId]) {
+                    const existing = existingPurchases[flashSaleId];
+                    this.log(`Purchase failed - already sold to ${existing.buyerId}`, {
+                        flashSaleId,
+                        buyerId,
+                        reason: 'ALREADY_SOLD'
+                    });
+                    return {
+                        success: false,
+                        reason: 'ALREADY_SOLD',
+                        error: 'Item was already purchased by another user'
+                    };
+                }
+
+                // Check for race condition
+                const attempts = this.getPurchaseAttempts(flashSaleId);
+                const earlierAttempt = attempts.find(attempt => 
+                    attempt.timestamp < purchaseTimestamp && attempt.buyerId !== buyerId
+                );
+
+                if (earlierAttempt) {
+                    this.log(`Purchase failed - race condition lost to ${earlierAttempt.buyerId}`, {
+                        flashSaleId,
+                        buyerId,
+                        reason: 'RACE_CONDITION_LOST'
+                    });
+                    return {
+                        success: false,
+                        reason: 'RACE_CONDITION_LOST',
+                        error: 'Another user purchased this item first'
+                    };
+                }
+
+                // Record purchase attempt
+                this.recordPurchaseAttempt(flashSaleId, buyerId, purchaseTimestamp);
+
+                // Record successful purchase
+                this.recordPurchase(flashSaleId, buyerId, purchaseTimestamp);
+
+                const event = {
+                    type: 'FLASH_SALE_PURCHASED',
+                    id: this.generateEventId(),
+                    timestamp: Date.now(),
+                    data: {
+                        flashSaleId,
+                        buyerId,
+                        purchaseTimestamp,
+                        purchasedAt: new Date().toISOString()
+                    }
+                };
+
+                this.broadcastEvent(event);
+                this.log(`Purchase successful by ${buyerId}`, event.data);
+                
+                return {
+                    success: true,
+                    purchaseTimestamp
+                };
+            }
+
+            recordPurchaseAttempt(flashSaleId, buyerId, timestamp) {
+                const attempts = this.getPurchaseAttempts(flashSaleId);
+                attempts.push({
+                    flashSaleId,
+                    buyerId,
+                    timestamp,
+                    recordedAt: new Date().toISOString()
+                });
+                localStorage.setItem('purchase_attempts', JSON.stringify(attempts));
+            }
+
+            getPurchaseAttempts(flashSaleId) {
+                try {
+                    const attempts = JSON.parse(localStorage.getItem('purchase_attempts') || '[]');
+                    return attempts.filter(attempt => attempt.flashSaleId === flashSaleId);
+                } catch {
+                    return [];
+                }
+            }
+
+            recordPurchase(flashSaleId, buyerId, timestamp) {
+                const purchases = this.getExistingPurchases();
+                purchases[flashSaleId] = {
+                    buyerId,
+                    timestamp,
+                    purchasedAt: new Date().toISOString()
+                };
+                localStorage.setItem('flash_sale_purchases', JSON.stringify(purchases));
+            }
+
+            getExistingPurchases() {
+                try {
+                    return JSON.parse(localStorage.getItem('flash_sale_purchases') || '{}');
+                } catch {
+                    return {};
+                }
+            }
+
+            broadcastEvent(event) {
+                const eventKey = `flash_sale_event_${event.id}`;
+                localStorage.setItem(eventKey, JSON.stringify(event));
+                
+                // Clean up after 1 second
+                setTimeout(() => {
+                    localStorage.removeItem(eventKey);
+                }, 1000);
+            }
+
+            generateEventId() {
+                return `${Date.now()}_${++this.eventId}`;
+            }
+
+            showFlashSale(flashSaleData) {
+                ['user2', 'user3'].forEach(userId => {
+                    if (flashSaleData.availableFor.includes(userId)) {
+                        const container = document.getElementById(`${userId}-flash-sale`);
+                        container.innerHTML = `
+                            <div class="flash-sale">
+                                <h3>⚡ Flash Sale Available!</h3>
+                                <p><strong>${flashSaleData.productName}</strong></p>
+                                <p>Original: ₹${flashSaleData.originalPrice} → <strong>₹${flashSaleData.discountedPrice}</strong></p>
+                                <button onclick="purchaseItem('${flashSaleData.id}', '${userId}')">
+                                    Purchase Now
+                                </button>
+                            </div>
+                        `;
+                    }
+                });
+            }
+
+            hideFlashSale(flashSaleId, buyerId) {
+                ['user2', 'user3'].forEach(userId => {
+                    const container = document.getElementById(`${userId}-flash-sale`);
+                    if (container.innerHTML.includes(flashSaleId)) {
+                        if (userId === buyerId) {
+                            container.innerHTML = `
+                                <div class="success">
+                                    ✅ Purchase Successful! You got the flash sale item.
+                                </div>
+                            `;
+                        } else {
+                            container.innerHTML = `
+                                <div class="error">
+                                    ❌ Item No Longer Available - Another user purchased it first.
+                                </div>
+                            `;
+                        }
+                    }
+                });
+            }
+
+            log(message, data = null) {
+                const logContainer = document.getElementById('event-log');
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.innerHTML = `[${timestamp}] ${message}`;
+                if (data) {
+                    logEntry.innerHTML += `<br><small>${JSON.stringify(data, null, 2)}</small>`;
+                }
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+
+        // Initialize storage service
+        const storageService = new TestStorageService();
+
+        // Test functions
+        function createFlashSale() {
+            const orderData = {
+                id: `order_${Date.now()}`,
+                productName: 'Premium Headphones',
+                originalPrice: 2000,
+                discountedPrice: 1500
+            };
+
+            const flashSaleId = storageService.createFlashSale(orderData);
+            
+            document.getElementById('user1-status').innerHTML = `
+                <div class="success">
+                    ✅ Order cancelled! Flash sale created with ID: ${flashSaleId}
+                </div>
+            `;
+        }
+
+        function purchaseItem(flashSaleId, userId) {
+            const result = storageService.purchaseFlashSale(flashSaleId, userId);
+            
+            const statusContainer = document.getElementById(`${userId}-status`);
+            
+            if (result.success) {
+                statusContainer.innerHTML = `
+                    <div class="success">
+                        ✅ Purchase successful! Timestamp: ${result.purchaseTimestamp}
+                    </div>
+                `;
+            } else {
+                statusContainer.innerHTML = `
+                    <div class="error">
+                        ❌ Purchase failed: ${result.error}
+                        <br><small>Reason: ${result.reason}</small>
+                    </div>
+                `;
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('event-log').innerHTML = '';
+        }
+
+        // Clear any existing data on page load
+        localStorage.removeItem('flash_sale_purchases');
+        localStorage.removeItem('purchase_attempts');
+        
+        // Clear flash sale displays
+        ['user2', 'user3'].forEach(userId => {
+            document.getElementById(`${userId}-flash-sale`).innerHTML = '<p>No flash sales available</p>';
+            document.getElementById(`${userId}-status`).innerHTML = '';
+        });
+        document.getElementById('user1-status').innerHTML = '';
+
+        storageService.log('Page loaded - ready for testing');
+    </script>
+</body>
+</html>
