@@ -1,30 +1,4 @@
-CREATE TABLE orders (
-  id uuid PRIMARY KEY,
-  user_id uuid NOT NULL REFERENCES users(id),
-  product_id uuid NOT NULL REFERENCES products(id),
-  status varchar(32) NOT NULL, -- 'active','cancelled','completed'
-  price numeric(10,2) NOT NULL,
---   shipping_zone varchar(64),
-  shipping_pincode bigint,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX idx_orders_status_updated_at ON orders(status, updated_at);
-
-
--- CREATE TABLE outbox (
---   id bigserial PRIMARY KEY,
---   aggregate_type varchar(64),
---   aggregate_id uuid,
---   event_type varchar(64),
---   payload jsonb,
---   published boolean DEFAULT false,
---   created_at timestamptz DEFAULT now(),
---   published_at timestamptz
--- );
--- CREATE INDEX idx_outbox_published ON outbox(published);
-
-
+-- First create tables without foreign key constraints
 CREATE TABLE users (
   id uuid PRIMARY KEY,
   name text,
@@ -35,7 +9,6 @@ CREATE TABLE users (
 );
 CREATE INDEX idx_users_city ON users(city);
 
-
 CREATE TABLE products (
   id uuid PRIMARY KEY,
   name text,
@@ -45,6 +18,19 @@ CREATE TABLE products (
   created_at timestamptz DEFAULT now()
 );
 CREATE INDEX idx_products_category ON products(category);
+
+-- Now create orders table with foreign key constraints
+CREATE TABLE orders (
+  id uuid PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES users(id),
+  product_id uuid NOT NULL REFERENCES products(id),
+  status varchar(32) NOT NULL, -- 'active','cancelled','completed'
+  price numeric(10,2) NOT NULL,
+  shipping_pincode bigint,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_orders_status_updated_at ON orders(status, updated_at);
 
 
 CREATE TABLE interests (

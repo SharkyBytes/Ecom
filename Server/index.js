@@ -4,8 +4,16 @@ import { pool } from "./db/db.js";
 import Redis from "ioredis";
 
 dotenv.config();
+import cancelRoutes from "./routes/cancel.js";
 
 const app = e();
+
+// Middleware
+app.use(e.json());
+app.use(e.urlencoded({ extended: true }));
+
+// Routes
+app.use("/api/cancel", cancelRoutes);
 
 // Database connection test
 const testDatabaseConnection = async () => {
@@ -18,9 +26,7 @@ const testDatabaseConnection = async () => {
 };
 
 // Redis connection setup
-const redisClient = new Redis({
-  url: process.env.REDIS_URL
-});
+const redisClient = new Redis(process.env.REDIS_URL);
 
 redisClient.on("error", (error) => {
   console.error("Redis error:", error);
@@ -34,7 +40,6 @@ redisClient.on("connect", () => {
 const startServer = async () => {
   try {
     await testDatabaseConnection();
-    await redisClient.connect();
     
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
