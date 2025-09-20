@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Features Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button {
+            background-color: #b282a4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #9a6b8f;
+        }
+        .responsive-test {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .responsive-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flash Sale PWA - Features Test</h1>
+    
+    <div class="test-section">
+        <h2>📱 PWA Installation Test</h2>
+        <p>Status: <span id="pwa-status">Checking...</span></p>
+        <button id="install-btn" style="display: none;">Install PWA</button>
+        <p><small>Note: Installation prompt may only appear on HTTPS or localhost</small></p>
+    </div>
+
+    <div class="test-section">
+        <h2>📐 Responsive Design Test</h2>
+        <p>Resize your browser window to test responsive breakpoints:</p>
+        <div class="responsive-test">
+            <div class="responsive-item">Mobile<br><small>&lt; 640px</small></div>
+            <div class="responsive-item">Tablet<br><small>641px - 1024px</small></div>
+            <div class="responsive-item">Desktop<br><small>&gt; 1024px</small></div>
+        </div>
+        <p>Current viewport: <span id="viewport-size">Calculating...</span></p>
+    </div>
+
+    <div class="test-section">
+        <h2>🎨 Safe Area Support Test</h2>
+        <p>Safe area insets (for devices with notches):</p>
+        <ul>
+            <li>Top: <span id="safe-top">0px</span></li>
+            <li>Bottom: <span id="safe-bottom">0px</span></li>
+            <li>Left: <span id="safe-left">0px</span></li>
+            <li>Right: <span id="safe-right">0px</span></li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Service Worker Test</h2>
+        <p>Service Worker Status: <span id="sw-status">Checking...</span></p>
+        <button id="sw-update" onclick="updateServiceWorker()">Check for Updates</button>
+    </div>
+
+    <div class="test-section">
+        <h2>💾 Storage Test</h2>
+        <p>LocalStorage: <span id="storage-status">Testing...</span></p>
+        <button onclick="testStorage()">Test Cross-Tab Communication</button>
+        <div id="storage-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Touch Target Test</h2>
+        <p>All buttons should be at least 44px for mobile accessibility:</p>
+        <button onclick="checkTouchTargets()">Check Touch Targets</button>
+        <div id="touch-results"></div>
+    </div>
+
+    <script>
+        // PWA Installation Test
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwa-status').textContent = 'Ready to install';
+            document.getElementById('pwa-status').parentElement.className = 'test-section success';
+            document.getElementById('install-btn').style.display = 'inline-block';
+        });
+
+        document.getElementById('install-btn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                document.getElementById('pwa-status').textContent = `Installation ${outcome}`;
+                deferredPrompt = null;
+                document.getElementById('install-btn').style.display = 'none';
+            }
+        });
+
+        // Check if already installed
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+            document.getElementById('pwa-status').textContent = 'Already installed';
+            document.getElementById('pwa-status').parentElement.className = 'test-section success';
+        } else if (!deferredPrompt) {
+            document.getElementById('pwa-status').textContent = 'Not available (needs HTTPS or localhost)';
+            document.getElementById('pwa-status').parentElement.className = 'test-section warning';
+        }
+
+        // Responsive Design Test
+        function updateViewportSize() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            let breakpoint = '';
+            
+            if (width < 640) breakpoint = 'Mobile';
+            else if (width < 1024) breakpoint = 'Tablet';
+            else breakpoint = 'Desktop';
+            
+            document.getElementById('viewport-size').textContent = `${width}x${height} (${breakpoint})`;
+        }
+
+        window.addEventListener('resize', updateViewportSize);
+        updateViewportSize();
+
+        // Safe Area Test
+        function updateSafeAreas() {
+            const computedStyle = getComputedStyle(document.documentElement);
+            document.getElementById('safe-top').textContent = 
+                computedStyle.getPropertyValue('--safe-area-inset-top') || '0px';
+            document.getElementById('safe-bottom').textContent = 
+                computedStyle.getPropertyValue('--safe-area-inset-bottom') || '0px';
+            document.getElementById('safe-left').textContent = 
+                computedStyle.getPropertyValue('--safe-area-inset-left') || '0px';
+            document.getElementById('safe-right').textContent = 
+                computedStyle.getPropertyValue('--safe-area-inset-right') || '0px';
+        }
+        updateSafeAreas();
+
+        // Service Worker Test
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistration().then(registration => {
+                if (registration) {
+                    document.getElementById('sw-status').textContent = 'Active';
+                    document.getElementById('sw-status').parentElement.className = 'test-section success';
+                } else {
+                    document.getElementById('sw-status').textContent = 'Not registered';
+                    document.getElementById('sw-status').parentElement.className = 'test-section warning';
+                }
+            });
+        } else {
+            document.getElementById('sw-status').textContent = 'Not supported';
+            document.getElementById('sw-status').parentElement.className = 'test-section error';
+        }
+
+        function updateServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(registration => {
+                    if (registration) {
+                        registration.update();
+                        document.getElementById('sw-status').textContent = 'Update checked';
+                    }
+                });
+            }
+        }
+
+        // Storage Test
+        function testStorage() {
+            try {
+                const testKey = 'pwa-test-' + Date.now();
+                const testValue = 'PWA storage test successful';
+                
+                localStorage.setItem(testKey, testValue);
+                const retrieved = localStorage.getItem(testKey);
+                localStorage.removeItem(testKey);
+                
+                if (retrieved === testValue) {
+                    document.getElementById('storage-status').textContent = 'Working';
+                    document.getElementById('storage-status').parentElement.className = 'test-section success';
+                    document.getElementById('storage-result').innerHTML = 
+                        '<p style="color: green;">✓ LocalStorage is working correctly</p>';
+                } else {
+                    throw new Error('Value mismatch');
+                }
+            } catch (error) {
+                document.getElementById('storage-status').textContent = 'Failed';
+                document.getElementById('storage-status').parentElement.className = 'test-section error';
+                document.getElementById('storage-result').innerHTML = 
+                    '<p style="color: red;">✗ LocalStorage test failed: ' + error.message + '</p>';
+            }
+        }
+        testStorage();
+
+        // Touch Target Test
+        function checkTouchTargets() {
+            const buttons = document.querySelectorAll('button');
+            let results = '<h4>Touch Target Analysis:</h4>';
+            let allGood = true;
+            
+            buttons.forEach((button, index) => {
+                const rect = button.getBoundingClientRect();
+                const minSize = 44;
+                const isGoodSize = rect.width >= minSize && rect.height >= minSize;
+                
+                if (!isGoodSize) allGood = false;
+                
+                results += `<p style="color: ${isGoodSize ? 'green' : 'red'};">
+                    Button ${index + 1}: ${Math.round(rect.width)}x${Math.round(rect.height)}px 
+                    ${isGoodSize ? '✓' : '✗ (too small)'}
+                </p>`;
+            });
+            
+            if (allGood) {
+                results += '<p style="color: green; font-weight: bold;">✓ All touch targets meet accessibility guidelines!</p>';
+            } else {
+                results += '<p style="color: red; font-weight: bold;">✗ Some touch targets are too small for mobile use</p>';
+            }
+            
+            document.getElementById('touch-results').innerHTML = results;
+        }
+    </script>
+</body>
+</html>
