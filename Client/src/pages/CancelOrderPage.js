@@ -44,12 +44,12 @@ const CancelOrderPage = () => {
         additionalInfo 
       });
       
-      setSuccess('Order cancelled successfully! Redirecting to home page...');
+      setSuccess('Order cancelled successfully!');
       
-      // Redirect after a short delay
-      setTimeout(() => {
-        navigate(APP_CONFIG.ROUTES.USER2);
-      }, 2000);
+      // // Redirect after a short delay
+      // setTimeout(() => {
+      //   // navigate(APP_CONFIG.ROUTES.USER2);
+      // }, 2000);
       
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to cancel order. Please try again.');
