@@ -2,20 +2,20 @@
 export const OFFER_ITEMS = [
   {
     id: 1,
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBP3e9ZTOglLQ0NvAeDBuD4gqYZfFO3ZnGIg&s',
+    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTzN__bPSIm6f25adPRqKU0L7BA3IFDITjnA&s',
     price: 99,
-    title: 'Sarees'
+    title: 'Gaji Silk Kurti'
   },
   {
     id: 2,
-    image: 'https://plus.unsplash.com/premium_photo-1658506787944-7939ed84aaf8?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bWVuJTIwZmFzaGlvbnxlbnwwfHwwfHx8MA%3D%3D',
+    image: 'https://images.meesho.com/images/products/453183751/fvkip_512.webp?width=512',
     price: 99,
-    title: 'Men\'s Wear'
+    title: 'Navy Blue Kurti '
   },
   {
     id: 3,
-    image: 'https://cdn.shopify.com/s/files/1/0759/0890/7283/files/different_type_of_women_footwear.jpg?v=1709710499',
+    image: 'https://images.meesho.com/images/products/390127616/9uhlw_512.webp?width=512',
     price: 99,
-    title: 'Footwear'
+    title: 'Women Sandals'
   }
 ];
