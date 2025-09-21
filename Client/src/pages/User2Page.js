@@ -4,6 +4,7 @@ import Header from '../components/Header';
 import Carousel from '../components/Carousel';
 import FlashDealNotification from '../components/FlashDealNotification';
 import { APP_CONFIG, BANNERS } from '../utils/constants';
+import { OFFER_ITEMS } from '../utils/offerData';
 import { subscribeToNotifications } from '../services/socket';
 
 const User2Page = () => {
@@ -44,12 +45,12 @@ const User2Page = () => {
   
   // Categories
   const categories = [
-    { name: 'Categories', icon: '/category-icon.png' },
-    { name: 'Kurti & Dresses', icon: '/kurti-icon.png' },
-    { name: 'Kids & Toys', icon: '/toys-icon.png' },
-    { name: 'Westernwear', icon: '/western-icon.png' },
-    { name: 'Home', icon: '/home-icon.png' },
-    { name: 'Men Clothing', icon: '/men-icon.png' }
+    { name: 'Categories', icon: 'https://cdn-icons-png.freepik.com/512/8634/8634546.png' },
+    { name: 'Kurti & Dresses', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTtt_Bc7yrj0qkFGzCV-LfpIG7O9Z-d5BnKpw&s' },
+    { name: 'Kids & Toys', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQOfs5F-tgufd7Ztcp34EkILFdQr2MlvC6cw&s' },
+    { name: 'Westernwear', icon: 'https://www.creaseindia.com/cdn/shop/files/sea-green-Indo-Western-outfit-for-men-indian-ethnicwear2.jpg?v=1742020216&width=1946' },
+    { name: 'Home', icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnAcIApTptEZQMXvBTOd-pKVJrrOBrKMEy1A&s' },
+    { name: 'Men Clothing', icon: 'https://i.pinimg.com/564x/85/22/34/8522346c05525356198706df30c7ebe0.jpg' }
   ];
   
   return (
@@ -86,11 +87,14 @@ const User2Page = () => {
         <div className="flex px-4 space-x-6">
           {categories.map((category, index) => (
             <div key={index} className="flex flex-col items-center space-y-1 min-w-[64px]">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-                {/* Placeholder for category icon */}
-                <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+              <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden border border-pink-100">
+                <img 
+                  src={category.icon} 
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <span className="text-xs text-center">{category.name}</span>
+              <span className="text-xs text-center font-medium">{category.name}</span>
             </div>
           ))}
         </div>
@@ -183,16 +187,23 @@ const User2Page = () => {
         </div>
         
         <div className="grid grid-cols-3 gap-2">
-          {[1, 2, 3].map((item) => (
-            <div key={item} className="relative rounded-lg overflow-hidden bg-orange-100">
-              <div className="absolute top-0 left-0 bg-meesho-secondary text-white text-xs font-bold p-1">
+          {OFFER_ITEMS.map((item) => (
+            <div key={item.id} className="relative rounded-lg overflow-hidden bg-orange-50 shadow">
+              <div className="absolute top-0 left-0 bg-pink-600 text-white text-xs font-bold p-1">
                 SALE
               </div>
-              <div className="p-4 h-32 flex flex-col justify-between">
-                <div className="text-xs font-bold">
-                  FROM <br />₹99
+              <div className="p-2 flex flex-col justify-between h-32">
+                <div className="text-xs font-bold text-pink-600">
+                  FROM <br />₹{item.price}
                 </div>
-                <div className="w-full h-16 bg-gray-200 rounded-md"></div>
+                <div className="w-full h-16 overflow-hidden rounded-md">
+                  <img 
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="text-xs mt-1 text-center font-medium">{item.title}</div>
               </div>
             </div>
           ))}

@@ -57,7 +57,7 @@ export const PRODUCTS = {
 export const BANNERS = [
   {
     id: 1,
-    image: "/assets/images/mega_sale.png",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSaZVt6YdguajQ6ELKDityAqJNWVCyVjSfkLw&s",
     alt: 'Mega Blockbuster Sale',
     link: '#'
   },
@@ -65,6 +65,12 @@ export const BANNERS = [
     id: 2,
     image: "https://images.meesho.com/images/marketing/1678691617864_1200.webp",
     alt: 'Western Wear Collection',
+    link: '#'
+  },
+  {
+    id: 3,
+    image: "https://images.meesho.com/images/marketing/1664368165450.jpg",
+    alt: 'Festive Collection',
     link: '#'
   }
 ];
