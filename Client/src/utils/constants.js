@@ -1,50 +1,54 @@
-// App Configuration Constants
+// Application configuration and constants
 export const APP_CONFIG = {
-  FLASH_SALE_DURATION: 300000, // 5 minutes in milliseconds
-  STORAGE_KEYS: {
-    FLASH_SALE: 'flash_sale_data',
-    ORDERS: 'orders_data',
-    USERS: 'users_data'
-  },
   ROUTES: {
     CANCEL_ORDER: '/',
     USER2: '/user2',
-    FLASH_SALE: '/flash-sale'
+    FLASH_SALE: '/flash-sale',
+  },
+  API_BASE_URL: 'http://localhost:5000',
+  SOCKET_URL: 'http://localhost:5000',
+  MOCK_DATA: {
+    ORDER_ID: '77777777-7777-7777-7777-777777777777',
+    USER_IDS: {
+      MUMBAI_USER: '11111111-1111-1111-1111-111111111111',
+      DELHI_USER: '22222222-2222-2222-2222-222222222222',
+      BANGALORE_USER: '33333333-3333-3333-3333-333333333333'
+    }
   }
 };
 
-// Color Scheme Constants
-export const COLORS = {
-  PRIMARY: '#b282a4',
-  PRIMARY_DARK: '#9a6b8f',
-  PRIMARY_LIGHT: '#c299b5',
-  TEXT: '#000000',
-  BACKGROUND: '#ffffff',
-  SUCCESS: '#10b981',
-  WARNING: '#f59e0b',
-  ERROR: '#ef4444'
-};
+// Cancellation reasons
+export const CANCELLATION_REASONS = [
+  { id: 'quality', label: 'Quality issues with the product' },
+  { id: 'size', label: 'Size/fit is not as expected' },
+  { id: 'color', label: 'Color/design is different from what was shown' },
+  { id: 'damaged', label: 'Product arrived damaged' },
+  { id: 'wrong', label: 'Received wrong product' },
+  { id: 'changed_mind', label: 'Changed my mind' },
+  { id: 'delay', label: 'Delivery taking too long' },
+  { id: 'other', label: 'Other reason' }
+];
 
-// Product Categories
-export const PRODUCT_CATEGORIES = {
-  ELECTRONICS: 'Electronics',
-  FASHION: 'Fashion',
-  HOME_DECOR: 'Home & Decor',
-  BEAUTY: 'Beauty & Personal Care',
-  SPORTS: 'Sports & Fitness',
-  BOOKS: 'Books & Media'
-};
-
-// Order Status
-export const ORDER_STATUS = {
-  ACTIVE: 'active',
-  CANCELLED: 'cancelled',
-  SOLD: 'sold'
-};
-
-// Flash Sale Status
-export const FLASH_SALE_STATUS = {
-  ACTIVE: 'active',
-  SOLD: 'sold',
-  EXPIRED: 'expired'
+// Product data
+export const PRODUCTS = {
+  KURTI_BLUE: {
+    id: '44444444-4444-4444-4444-444444444444',
+    name: 'Cotton Kurti Blue',
+    category: 'women_clothing',
+    price: 899.99,
+    image: 'https://images.meesho.com/images/products/42944024/jvgnb_512.jpg',
+    description: 'Elegant blue cotton kurti with traditional design',
+    rating: 4.2,
+    reviews: 128
+  },
+  KURTI_RED: {
+    id: '55555555-5555-5555-5555-555555555555',
+    name: 'Cotton Kurti Red',
+    category: 'women_clothing',
+    price: 799.99,
+    image: 'https://images.meesho.com/images/products/42944024/jvgnb_512.jpg',
+    description: 'Stylish red cotton kurti for casual wear',
+    rating: 4.5,
+    reviews: 96
+  }
 };
