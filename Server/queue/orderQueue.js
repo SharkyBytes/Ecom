@@ -89,20 +89,36 @@ orderCancellationQueue.process(async (job) => {
         continue;
       }
       
-      // Create flash deal
+      // Create flash deal with 2-day expiration
       const flashDealId = uuidv4();
+      const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+      
       await query(
         `INSERT INTO flash_deals (
           id, user_id, order_id, product_id, category, city, 
           original_price, return_cost, cost_saved, discount_amount, 
           discount_percent, discounted_price, expires_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW() + INTERVAL '2 days')`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
         [
           flashDealId, user.id, orderId, productId, order.category, user.city,
           order.price, returnCost, costSaved, discountAmount,
-          discountPercent, discountedPrice
+          discountPercent, discountedPrice, expiresAt
         ]
       );
+      
+      // Schedule automatic cleanup of expired flash deals
+      // In a real production system, this would be handled by a separate scheduled job
+      setTimeout(async () => {
+        try {
+          await query(
+            `DELETE FROM flash_deals WHERE id = $1`,
+            [flashDealId]
+          );
+          console.log(`Flash deal ${flashDealId} expired and removed automatically`);
+        } catch (err) {
+          console.error(`Error removing expired flash deal ${flashDealId}:`, err);
+        }
+      }, 2 * 24 * 60 * 60 * 1000); // 2 days in milliseconds
       
       console.log(`Created flash deal ${flashDealId} for user ${user.id}`);
       

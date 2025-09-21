@@ -59,7 +59,11 @@ async function seedMockData() {
         PRODUCTS.COTTON_KURTI_GREEN, 'Cotton Kurti Green', 'women_clothing', PINCODES.BANGALORE, 999.99
       ]
     );
+    
     console.log('Products created or already exist');
+    
+    // Create product images (in a real system, this would be a separate table)
+    console.log('Product images would be stored here in a real system');
     
     // Create one active order - shipping from Delhi to Mumbai
     await query(

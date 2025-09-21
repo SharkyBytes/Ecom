@@ -8,6 +8,7 @@ import { initializeSocket } from "./socket.js";
 
 dotenv.config();
 import cancelRoutes from "./routes/cancel.js";
+import flashDealsRoutes from "./routes/flash-deals.js";
 
 const app = e();
 const httpServer = createServer(app);
@@ -22,6 +23,7 @@ app.use(e.urlencoded({ extended: true }));
 
 // Routes
 app.use("/api/cancel", cancelRoutes);
+app.use("/api/flash-deals", flashDealsRoutes);
 
 // Database connection test
 const testDatabaseConnection = async () => {

@@ -1,3 +1,70 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Using system fonts instead of custom fonts to avoid errors */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --meesho-primary: #f43397;
+  --meesho-secondary: #b282a4;
+  --meesho-light: #fce5f3;
+  --meesho-dark: #333333;
+}
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f9f9f9;
+  color: #333333;
+}
+
+/* Meesho specific styles */
+.meesho-header {
+  background-color: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.meesho-button {
+  @apply bg-meesho-secondary text-white py-2 px-4 rounded-md font-medium hover:opacity-90 transition-opacity;
+}
+
+.meesho-button-outline {
+  @apply border border-meesho-secondary text-meesho-secondary py-2 px-4 rounded-md font-medium hover:bg-meesho-light transition-colors;
+}
+
+.flash-deal-badge {
+  @apply bg-meesho-secondary text-white px-2 py-1 rounded-md text-xs font-bold uppercase;
+}
+
+.flash-deal-timer {
+  @apply bg-meesho-dark text-white px-2 py-1 rounded-md text-xs font-bold;
+}
+
+.flash-deal-discount {
+  @apply bg-meesho-success text-white px-2 py-1 rounded-md text-xs font-bold;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b282a4;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #f43397;
+}
