@@ -179,7 +179,7 @@ const User2Page = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-meesho-secondary mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a4 4 0 112.76 3.77c.08.84.12 1.7.12 2.57V8" />
             </svg>
-            Offer Zone
+            Recently Viewed
           </h2>
           <span className="text-sm font-medium text-meesho-secondary">
             VIEW ALL
@@ -190,17 +190,15 @@ const User2Page = () => {
           {OFFER_ITEMS.map((item) => (
             <div key={item.id} className="relative rounded-lg overflow-hidden bg-orange-50 shadow">
               <div className="absolute top-0 left-0 bg-pink-600 text-white text-xs font-bold p-1">
-                SALE
+                
               </div>
               <div className="p-2 flex flex-col justify-between h-32">
-                <div className="text-xs font-bold text-pink-600">
-                  FROM <br />₹{item.price}
-                </div>
-                <div className="w-full h-16 overflow-hidden rounded-md">
+                
+                <div className="w-full h-25 overflow-hidden rounded-md">
                   <img 
                     src={item.image}
                     alt={item.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto object-cover"
                   />
                 </div>
                 <div className="text-xs mt-1 text-center font-medium">{item.title}</div>
