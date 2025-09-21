@@ -18,9 +18,11 @@ const Header = ({ showBackButton = false, title = "Meesho" }) => {
             </button>
           )}
           <Link to={APP_CONFIG.ROUTES.CANCEL_ORDER} className="flex items-center">
-            <h1 className="text-meesho-secondary text-2xl font-heading">
-              {title}
-            </h1>
+            <img 
+              src="/assets/images/meesho_logo.png" 
+              alt="Meesho Logo" 
+              className="h-12"
+            />
           </Link>
         </div>
         

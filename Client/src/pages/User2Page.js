@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
-import { APP_CONFIG } from '../utils/constants';
+import Carousel from '../components/Carousel';
+import FlashDealNotification from '../components/FlashDealNotification';
+import { APP_CONFIG, BANNERS } from '../utils/constants';
 import { subscribeToNotifications } from '../services/socket';
 
 const User2Page = () => {
@@ -55,52 +57,16 @@ const User2Page = () => {
       <Header title="Meesho" />
       
       {/* User Identifier */}
-      <div className="bg-meesho-light text-meesho-secondary px-4 py-2 text-center">
+      <div className="bg-pink-100 text-pink-600 px-4 py-2 text-center">
         <span className="font-medium">User 2 (Delhi)</span>
       </div>
       
       {/* Flash Deal Notification */}
       {showNotification && latestNotification && (
-        <div className="fixed top-32 left-0 right-0 mx-auto max-w-sm bg-white shadow-meesho-lg rounded-lg overflow-hidden z-50 transform transition-transform duration-300 ease-in-out animate-bounce">
-          <div className="p-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <div className="h-10 w-10 rounded-full bg-meesho-light flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-meesho-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="ml-3 w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900">
-                  Flash Deal Available!
-                </p>
-                <p className="mt-1 text-sm text-gray-500">
-                  {latestNotification.body}
-                </p>
-                <div className="mt-2">
-                  <Link 
-                    to={`${APP_CONFIG.ROUTES.FLASH_SALE}?id=${latestNotification.flashDealId}`}
-                    className="text-sm font-medium text-meesho-secondary hover:text-meesho-primary"
-                  >
-                    View Deal →
-                  </Link>
-                </div>
-              </div>
-              <div className="ml-4 flex-shrink-0 flex">
-                <button
-                  onClick={() => setShowNotification(false)}
-                  className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none"
-                >
-                  <span className="sr-only">Close</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <FlashDealNotification 
+          notification={latestNotification} 
+          onClose={() => setShowNotification(false)} 
+        />
       )}
       
       {/* Location Bar */}
@@ -130,15 +96,9 @@ const User2Page = () => {
         </div>
       </div>
       
-      {/* Main Banner */}
+      {/* Main Carousel Banner */}
       <div className="p-4">
-        <div className="relative rounded-lg overflow-hidden">
-          <img 
-            src="https://images.meesho.com/images/marketing/1678691617864_1200.webp" 
-            alt="Mega Blockbuster Sale"
-            className="w-full h-auto"
-          />
-        </div>
+        <Carousel images={BANNERS} />
       </div>
       
       {/* Flash Deals Section */}
@@ -161,31 +121,45 @@ const User2Page = () => {
               <Link 
                 key={index} 
                 to={`${APP_CONFIG.ROUTES.FLASH_SALE}?id=${deal.flashDealId}`}
-                className="bg-white rounded-lg shadow-meesho overflow-hidden"
+                className="bg-white rounded-lg shadow-lg overflow-hidden"
               >
                 <div className="relative">
                   <img 
-                    src="https://images.meesho.com/images/products/42944024/jvgnb_512.jpg" 
+                    src="/assets/images/blue_kurti.png" 
                     alt={deal.title}
-                    className="w-full h-40 object-cover"
+                    className="w-full h-48 object-cover"
                   />
-                  <div className="absolute top-2 left-2 flash-deal-badge">
+                  <div className="absolute top-0 left-0 bg-pink-600 text-white px-2 py-1 text-xs font-bold uppercase">
                     Flash Deal
+                  </div>
+                  <div className="absolute bottom-0 right-0 bg-pink-600 text-white px-2 py-1 text-xs font-bold">
+                    {deal.body.match(/\((\d+)% off\)/)[1]}% OFF
                   </div>
                 </div>
                 <div className="p-3">
                   <h3 className="font-medium text-gray-800 truncate">Cotton Kurti Blue</h3>
-                  <div className="mt-1 flex items-center justify-between">
+                  <div className="mt-1 flex items-center">
+                    <div className="flex items-center bg-green-500 text-white text-xs px-1 rounded">
+                      <span>4.2</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                    <span className="text-xs text-gray-500 ml-2">128 Reviews</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
                     <div>
-                      <span className="font-bold">₹{parseFloat(deal.body.match(/₹(\d+\.\d+)/)[1])}</span>
+                      <span className="font-bold text-pink-600">₹{parseFloat(deal.body.match(/₹(\d+\.\d+)/)[1])}</span>
                       <span className="text-xs text-gray-500 line-through ml-1">₹899.99</span>
                     </div>
-                    <span className="flash-deal-discount">
-                      {deal.body.match(/\((\d+)% off\)/)[1]}% OFF
-                    </span>
                   </div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    Expires in 2 days
+                  <div className="mt-2 flex justify-between items-center">
+                    <div className="text-xs bg-pink-50 text-pink-600 px-1.5 py-0.5 rounded-sm">
+                      Free Delivery
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Expires in 2 days
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -227,11 +201,11 @@ const User2Page = () => {
       
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2">
-        <div className="flex flex-col items-center text-meesho-secondary">
+        <div className="flex flex-col items-center text-pink-600">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
-          <span className="text-xs">Home</span>
+          <span className="text-xs font-medium">Home</span>
         </div>
         <div className="flex flex-col items-center text-gray-500">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

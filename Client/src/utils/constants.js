@@ -36,7 +36,7 @@ export const PRODUCTS = {
     name: 'Cotton Kurti Blue',
     category: 'women_clothing',
     price: 899.99,
-    image: 'https://images.meesho.com/images/products/42944024/jvgnb_512.jpg',
+    image: '/assets/images/blue_kurti.png',
     description: 'Elegant blue cotton kurti with traditional design',
     rating: 4.2,
     reviews: 128
@@ -46,9 +46,25 @@ export const PRODUCTS = {
     name: 'Cotton Kurti Red',
     category: 'women_clothing',
     price: 799.99,
-    image: 'https://images.meesho.com/images/products/42944024/jvgnb_512.jpg',
+    image: '/assets/images/blue_kurti.png',
     description: 'Stylish red cotton kurti for casual wear',
     rating: 4.5,
     reviews: 96
   }
 };
+
+// Banner images
+export const BANNERS = [
+  {
+    id: 1,
+    image: "/assets/images/mega_sale.png",
+    alt: 'Mega Blockbuster Sale',
+    link: '#'
+  },
+  {
+    id: 2,
+    image: "https://images.meesho.com/images/marketing/1678691617864_1200.webp",
+    alt: 'Western Wear Collection',
+    link: '#'
+  }
+];

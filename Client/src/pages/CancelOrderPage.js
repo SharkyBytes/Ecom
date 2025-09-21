@@ -64,7 +64,7 @@ const CancelOrderPage = () => {
       
       <main className="container mx-auto px-4 py-6 max-w-lg">
         {/* User Identifier */}
-        <div className="bg-meesho-light text-meesho-secondary px-4 py-2 rounded-md mb-4 text-center">
+        <div className="bg-pink-100 text-pink-600 px-4 py-2 rounded-md mb-4 text-center">
           <span className="font-medium">User 1 (Mumbai)</span>
         </div>
         
@@ -73,15 +73,15 @@ const CancelOrderPage = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex justify-between items-center mb-2">
               <h2 className="font-bold text-gray-800">Order #{order.id.substring(0, 8)}</h2>
-              <span className="text-sm text-meesho-secondary font-medium">{order.status}</span>
+              <span className="text-sm text-pink-600 font-medium">{order.status}</span>
             </div>
             <p className="text-sm text-gray-500">Ordered on {order.orderDate} • Delivery by {order.deliveryDate}</p>
           </div>
           
           <div className="p-4 flex">
-            <div className="w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
+            <div className="w-24 h-28 rounded-md overflow-hidden flex-shrink-0">
               <img 
-                src={order.product.image} 
+                src="/assets/images/blue_kurti.png" 
                 alt={order.product.name}
                 className="w-full h-full object-cover"
               />
@@ -107,7 +107,7 @@ const CancelOrderPage = () => {
             <div className="p-4 border-t border-gray-200">
               <button 
                 onClick={() => setShowCancelForm(true)}
-                className="w-full meesho-button-outline"
+                className="w-full border border-pink-600 text-pink-600 py-2 px-4 rounded-md font-medium hover:bg-pink-50 transition-colors"
               >
                 Return/Cancel Order
               </button>
@@ -181,7 +181,7 @@ const CancelOrderPage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="meesho-button"
+                  className="bg-pink-600 text-white py-2 px-4 rounded-md font-medium hover:opacity-90 transition-opacity"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Processing...' : 'Confirm Cancellation'}
